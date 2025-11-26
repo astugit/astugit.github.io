@@ -1,1 +1,155 @@
-<h1>I really don't know what to put here</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>astugit — Home</title>
+  <style>
+    :root{--bg:#F7F6F3;--card:#FFFFFF;--accent:#6C9BD1;--muted:#6b6b6b}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;color:#222;background:linear-gradient(180deg,#f8fbff 0%, var(--bg) 100%);}
+    header{padding:28px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(43,64,98,0.08);}
+    .logo img{width:100%;height:100%;object-fit:cover;display:block}
+    h1{font-size:20px;margin:0}
+    nav a{margin-left:12px;text-decoration:none;color:var(--muted);font-weight:600}
+    main{max-width:980px;margin:24px auto;padding:24px}
+    .card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 8px 28px rgba(35,55,90,0.06);}
+    .hero{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:center}
+    .hero-left h2{margin:0 0 8px 0;font-size:28px}
+    .hero-left p{margin:0;color:var(--muted)}
+    .buttons{margin-top:18px;display:flex;gap:12px;flex-wrap:wrap}
+    .btn{padding:12px 18px;border-radius:10px;border:none;font-weight:700;cursor:pointer}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),#7fc6e8);color:white;box-shadow:0 8px 20px rgba(108,155,209,0.18)}
+    .btn-ghost{background:transparent;border:1px solid rgba(34,34,34,0.06);color:#234;}
+    .right-card{display:flex;flex-direction:column;gap:12px}
+    .github-card{display:flex;gap:12px;align-items:center}
+    .github-card img{width:72px;height:72px;border-radius:12px;object-fit:cover}
+    .meta{color:var(--muted);font-size:14px}
+    .about{margin-top:18px}
+    footer{max-width:980px;margin:18px auto;padding:16px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* About page styles */
+    .about-page{display:none;max-width:980px;margin:24px auto;padding:24px}
+    .about-hero{display:flex;gap:20px;align-items:center}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef7ff;color:#1a567f;font-weight:700;font-size:13px}
+
+    @media (max-width:860px){
+      .hero{grid-template-columns:1fr;}
+      .right-card{order:2}
+      .logo{width:48px;height:48px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo"><img src="https://github.com/astugit.png" alt="avatar"></div>
+      <div>
+        <h1>astugit</h1>
+        <div class="meta">A cozy little corner on the web</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#" id="nav-home">Home</a>
+      <a href="#" id="nav-about">About</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HOME VIEW -->
+    <section id="homeView" class="card hero">
+      <div class="hero-left">
+        <h2>Welcome — take a look around</h2>
+        <p>Click one of the buttons to visit a fun page. Below you’ll also find a snapshot of my GitHub profile.</p>
+
+        <div class="buttons">
+          <a class="btn btn-primary" href="https://astutillo.me/easteregg" id="easterBtn" title="Get a mystery prize here">Get a mystery prize here</a>
+          <a class="btn btn-ghost" href="https://astutillo.me/snowflake" id="snowBtn" title="Get ice here">Get ice here</a>
+        </div>
+
+        <div class="about">
+          <div class="card github-card" style="margin-top:18px">
+            <img src="https://github.com/astugit.png" alt="astugit avatar">
+            <div>
+              <div style="font-weight:800">astugit</div>
+              <div class="meta">Joined: Nov 18, 2025</div>
+              <div class="meta">Public repositories: 0</div>
+              <div style="margin-top:8px"><a class="btn btn-ghost" href="https://github.com/astugit" target="_blank">View on GitHub</a></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <aside class="right-card card">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:20px;font-weight:800">Hi 👋</div>
+          <div class="meta">Thanks for stopping by — hope you find something fun!</div>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="pill">Homey • Friendly</div>
+        </div>
+
+        <div style="margin-top:16px;color:var(--muted);font-size:14px">
+          Quick links
+          <ul style="padding-left:18px;margin:8px 0">
+            <li><a href="#" id="openAboutLink">Read more about me</a></li>
+            <li><a href="https://github.com/astugit">GitHub profile</a></li>
+          </ul>
+        </div>
+
+      </aside>
+    </section>
+
+    <!-- ABOUT VIEW -->
+    <section id="aboutView" class="about-page card">
+      <div class="about-hero">
+        <div class="logo"><img src="https://github.com/astugit.png" alt="avatar"></div>
+        <div>
+          <h2>About me</h2>
+          <div class="meta">I’m astugit — tinkerer, student, and web experimenter. This page is a small, homey hub for my projects and links.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <h3>What I like</h3>
+        <p class="meta">Coding small projects, learning new web stuff, and making tiny pleasant experiences for visitors.</p>
+
+        <h3 style="margin-top:12px">Contact</h3>
+        <p class="meta">You can find me on GitHub: <a href="https://github.com/astugit">github.com/astugit</a></p>
+
+        <h3 style="margin-top:12px">Design notes</h3>
+        <p class="meta">This single-file site is mobile-friendly, accessible, and intentionally simple — feel free to copy and adapt.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Made with care · © astugit
+  </footer>
+
+  <script>
+    // Simple SPA navigation
+    const homeView = document.getElementById('homeView');
+    const aboutView = document.getElementById('aboutView');
+    const navHome = document.getElementById('nav-home');
+    const navAbout = document.getElementById('nav-about');
+    const openAboutLink = document.getElementById('openAboutLink');
+
+    function showHome(){ homeView.style.display='grid'; aboutView.style.display='none'; }
+    function showAbout(){ homeView.style.display='none'; aboutView.style.display='block'; }
+
+    navHome.addEventListener('click', (e)=>{ e.preventDefault(); showHome(); });
+    navAbout.addEventListener('click', (e)=>{ e.preventDefault(); showAbout(); });
+    openAboutLink.addEventListener('click', (e)=>{ e.preventDefault(); showAbout(); });
+
+    // Initialize
+    showHome();
+
+  </script>
+</body>
+</html>
