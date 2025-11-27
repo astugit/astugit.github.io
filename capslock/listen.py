@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 async def run_client():
     #uri = "ws://localhost:8000/ws"
-    uri = "wss://0.0.0.0:8080"
+    uri = "wss://0.0.0.0:8080/ws"
 
     with open("counts.txt", "a") as file:
         async with websockets.connect(uri) as websocket:
