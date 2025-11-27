@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Snake — Local Multiplayer + Leaderboards</title>
+  <title>Snake — Local Multiplayer</title>
   <style>
     :root{--bg:#0b1220;--panel:#0f1724;--muted:#9aa6b2;--accent:#00d1b2}
     *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
@@ -19,8 +19,6 @@
     .muted{color:var(--muted);font-size:13px}
     .right-col{display:flex;flex-direction:column;gap:12px}
     .mini-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .leaderboard{max-height:360px;overflow:auto;padding:8px;border-radius:8px}
-    .lb-item{display:flex;justify-content:space-between;padding:8px;border-radius:6px;margin-bottom:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
     label{display:block;font-size:13px;margin-bottom:6px}
     .mode-select{display:flex;gap:6px}
     input[type=number],select,input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
@@ -36,7 +34,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>Snake — Local Multiplayer + Leaderboards</h1>
+      <h1>Snake — Local Multiplayer</h1>
       <div class="muted">Single file HTML • Open in your browser</div>
     </header>
 
@@ -60,8 +58,6 @@
         <button id="pauseBtn">Pause</button>
         <button id="resetBtn">Reset</button>
         <button id="addBot">Add AI bot</button>
-        <button id="exportLb">Export leaderboard</button>
-        <button id="importLb">Import leaderboard</button>
       </div>
 
       <div style="display:flex;gap:8px;width:100%;align-items:center;justify-content:space-between">
@@ -93,16 +89,6 @@
         </select>
         <label>Initial Players</label>
         <div class="players-grid" id="playersConfig"></div>
-      </div>
-
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center"><strong>Leaderboards</strong><button id="clearLb" class="small">Clear</button></div>
-        <div class="leaderboard" id="leaderboard"></div>
-      </div>
-
-      <div class="panel">
-        <label>Export / Import</label>
-        <textarea id="lbJson" style="width:100%;height:110px;padding:8px;border-radius:8px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.06)"></textarea>
       </div>
     </aside>
 
@@ -153,35 +139,6 @@
       }
       return players;
     }
-
-    /* ========== Leaderboard (localStorage) ========== */
-    const LB_KEY = 'snake_leaderboard_v1';
-    function loadLB(){
-      try{const raw=localStorage.getItem(LB_KEY);return raw?JSON.parse(raw):{single:[],duo:[],four:[],ffa:[]}}catch(e){return {single:[],duo:[],four:[],ffa:[]}}}
-    function saveLB(lb){localStorage.setItem(LB_KEY,JSON.stringify(lb));}
-    let leaderboardData = loadLB();
-
-    function addToLB(mode,entry){
-      const arr = leaderboardData[mode] || [];
-      arr.push(entry);
-      arr.sort((a,b)=>b.score-a.score);
-      leaderboardData[mode] = arr.slice(0,12);
-      saveLB(leaderboardData);
-      renderLB();
-    }
-
-    function renderLB(){
-      const el = $('#leaderboard');el.innerHTML='';
-      const arr = leaderboardData[config.mode] || [];
-      if(arr.length===0){el.innerHTML='<div class="muted">No scores yet</div>';return}
-      arr.forEach((r,i)=>{
-        const div = document.createElement('div');div.className='lb-item';
-        div.innerHTML = `<div><strong>#${i+1} ${escapeHtml(r.name||'Player')}</strong><div class="muted" style="font-size:12px">${new Date(r.when).toLocaleString()}</div></div><div style="text-align:right"><div><strong>${r.score}</strong></div><div class="muted" style="font-size:12px">${r.mode}</div></div>`;
-        el.appendChild(div);
-      })
-    }
-
-    function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" })[c])}
 
     /* ========== Game core ========== */
     function createGame(){
@@ -315,7 +272,6 @@
         const ateIndex = game.apples.findIndex(a=>a.x===nh.x&&a.y===nh.y);
         if(ateIndex>=0){
           p.score += 10; // basic point
-          // extra points for multi apple combos
           game.apples.splice(ateIndex,1);
           spawnApplesIfNeeded();
         } else {
@@ -358,10 +314,8 @@
       const best = game.players.reduce((acc,p)=>p.score>acc.score?{id:p.id,score:p.score}:{...acc},{id:'',score:-1});
       $('#status').textContent = `Round over — winner: ${best.id} (${best.score})`;
       $('#topScore').textContent = best.score;
-      // prompt name and add to LB
-      const name = prompt('Round finished. Enter your name for the leaderboard (or leave blank):') || 'Player';
-      const entry = {name,score:best.score,when:Date.now(),mode:config.mode};
-      addToLB(config.mode,entry);
+      // prompt name (leaderboard removed)
+      // No leaderboard handling
     }
 
     /* ========== Simple bot AI ========== */
@@ -386,15 +340,14 @@
     }
 
     /* ========== UI wiring ========== */
-    function setMode(mode){ config.mode=mode; if(mode==='single')config.maxPlayers=1; if(mode==='duo')config.maxPlayers=2; if(mode==='four')config.maxPlayers=4; if(mode==='ffa')config.maxPlayers=4; $('#mode-title').textContent = 'Mode: ' + ({single:'Single Player',duo:'2 Players (local)',four:'Up to 4 Players',ffa:'Free-for-all'}[mode]||mode);
-      buildPlayersConfig(); renderLB(); }
+    function setMode(mode){ config.mode=mode; if(mode==='single')config.maxPlayers=1; if(mode==='duo')config.maxPlayers=2; if(mode==='four')config.maxPlayers=4; if(mode==='ffa')config.maxPlayers=4; buildPlayersConfig(); }
 
     function buildPlayersConfig(){
       const wrap = $('#playersConfig');wrap.innerHTML='';
       for(let i=0;i<config.maxPlayers;i++){
         const def = PLAYER_DEFS[i];
         const div = document.createElement('div');div.className='player-config';
-        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong style="color:${def.color}">${def.id}</strong><label><input type="checkbox" data-pidx="${i}" ${i===0?'checked':''}/> Enabled</label></div><div class="muted" style="font-size:13px">Keys: <span class="kbd">${keyName(def.keys.up)}</span> <span class="kbd">${keyName(def.keys.left)}</span> <span class="kbd">${keyName(def.keys.down)}</span> <span class="kbd">${keyName(def.keys.right)}</span></div><div style="margin-top:8px">Bot? <input type="checkbox" data-bot="${i}" /></div>`;
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong style="color:${def.color}">${def.id}</strong><label><input type="checkbox" data-pidx="${i}" checked /> AI Bot</label></div>`;
         wrap.appendChild(div);
       }
     }
@@ -415,27 +368,19 @@
       game = createGame();
       // apply bot settings
       qs('[data-bot]').forEach(cb=>{const idx=parseInt(cb.getAttribute('data-bot')); if(cb.checked){game.players[idx].isBot=true} });
-      // disable players unchecked
-      const enabled = qs('[data-pidx]');
-      enabled.forEach(ch=>{const idx=parseInt(ch.getAttribute('data-pidx')); if(!ch.querySelector('input')||ch.querySelector('input').checked===undefined) return;});
       // set speed
       game.running = true;game.tick=0;$('#status').textContent='Playing...';
-      renderLB();
       loop();
     });
 
     $('#pauseBtn').addEventListener('click',()=>{if(!game)return;game.running=!game.running;$('#status').textContent = game.running ? 'Playing...' : 'Paused';});
     $('#resetBtn').addEventListener('click',()=>{if(confirm('Restart the game?')){game = createGame(); draw();$('#status').textContent='Ready'}});
 
-    $('#addBot').addEventListener('click',()=>{if(!game)return;const idx = game.players.findIndex(p=>!p.isBot); if(idx>=0){game.players[idx].isBot=true;alert('Added bot to '+game.players[idx].id)} else alert('All players already bots or none available')});
+    $('#addBot').addEventListener('click',()=>{if(!game)return;const idx = game.players.findIndex(p=>!p.isBot); if(idx>=0){game.players[idx].isBot=true;alert('Added bot to '+game.players[idx].id)} });
 
     $('#speed').addEventListener('input',e=>{$('#speed-val').textContent=e.target.value;config.speed=parseInt(e.target.value,10)});
     $('#modeSelect').addEventListener('change',e=>{setMode(e.target.value)});
     $('#gridSize').addEventListener('change',e=>{config.grid=parseInt(e.target.value,10)});
-
-    $('#exportLb').addEventListener('click',()=>{$('#lbJson').value = JSON.stringify(leaderboardData, null, 2); alert('Leaderboard JSON placed into the textarea — copy to share')});
-    $('#importLb').addEventListener('click',()=>{try{const parsed=JSON.parse($('#lbJson').value);leaderboardData=parsed;saveLB(leaderboardData);renderLB();alert('Imported')}catch(e){alert('Invalid JSON') }});
-    $('#clearLb').addEventListener('click',()=>{if(confirm('Clear local leaderboard?')){leaderboardData={single:[],duo:[],four:[],ffa:[]};saveLB(leaderboardData);renderLB();$('#lbJson').value='';}})
 
     // build initial UI
     setMode('single');$('#speed-val').textContent = $('#speed').value;
@@ -448,28 +393,12 @@
     }
 
     // initial draw
-    game = createGame(); draw(); renderLB();
-
-    // helpers for tossing in initial players
-    function setupExamplePlayers(){
-      // make some sample players in LB for demo if empty
-      if(Object.values(leaderboardData).every(a=>a.length===0)){
-        addToLB('single',{name:'Sam',score:420,when:Date.now(),mode:'single'});
-        addToLB('duo',{name:'Alex',score:250,when:Date.now(),mode:'duo'});
-      }
-    }
-    setupExamplePlayers();
-
-    // mobile / touch: simple overlay controls (basic)
-    // omitted for brevity; feel free to add on request
+    game = createGame(); draw();
 
     // expose a tiny API for future network code
     window.__snakeGameAPI = {
       getState:()=>({players:game.players.map(p=>({id:p.id,score:p.score,alive:p.alive,length:p.body.length}))}),
-      exportLeaderboard:()=>JSON.stringify(leaderboardData),
-      importLeaderboard:(json)=>{leaderboardData=JSON.parse(json);saveLB(leaderboardData);renderLB();}
     }
-
   </script>
 </body>
 </html>
