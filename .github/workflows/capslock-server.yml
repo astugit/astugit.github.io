@@ -22,7 +22,6 @@ jobs:
           repository: nolenroyalty/global-capslock
           path: capslock
 
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -32,6 +31,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install fastapi uvicorn websockets
+      - name: Get IP Addresses
+        id: ip
+        uses: candidob/get-runner-ip@v1.0.0
+
+      - name: See IP Addresses
+        run: |
+          echo ${{ steps.ip.outputs.ipv4 }}
+          echo ${{ steps.ip.outputs.ipv6 }}
 
       - name: Run capslock server
         working-directory: capslock
