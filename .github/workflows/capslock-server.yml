@@ -65,7 +65,7 @@ jobs:
           && sudo apt install ngrok
 
           echo "Configuring ngrok authtoken (token provided via workflow secrets)..."
-          ./ngrok authtoken "$NGROK_AUTHTOKEN"
+          ngrok authtoken "$NGROK_AUTHTOKEN"
 
           echo "Starting ngrok with the exact command requested: ngrok http 80 (using host-header to forward to local port $PORT)"
           # Start ngrok in the background. The command is exactly "ngrok http 80" per your request,
