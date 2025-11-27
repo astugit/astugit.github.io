@@ -124,7 +124,7 @@ async def get_latest_message(websocket):
 
 async def run_client():
     #uri = "ws://localhost:8000/ws"
-    uri = "https://astutillo.me:8080"
+    uri = "wss://astugit.github.io:8080"
 
     async with websockets.connect(uri) as websocket:
         print("connected")
