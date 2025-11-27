@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Snake — Local Multiplayer + Leaderboards</title>
+  <style>
+    :root{--bg:#0b1220;--panel:#0f1724;--muted:#9aa6b2;--accent:#00d1b2}
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#02040a);color:#e6eef6}
+    .app{max-width:1100px;margin:24px auto;padding:18px;display:grid;grid-template-columns:1fr 320px;gap:18px}
+    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between}
+    header h1{margin:0;font-size:20px}
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.02));padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.6)}
+    #game-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+    canvas{background:linear-gradient(180deg,#071024,#05101a);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.7);image-rendering:pixelated}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;padding:8px 10px;border-radius:8px;cursor:pointer}
+    .muted{color:var(--muted);font-size:13px}
+    .right-col{display:flex;flex-direction:column;gap:12px}
+    .mini-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .leaderboard{max-height:360px;overflow:auto;padding:8px;border-radius:8px}
+    .lb-item{display:flex;justify-content:space-between;padding:8px;border-radius:6px;margin-bottom:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+    label{display:block;font-size:13px;margin-bottom:6px}
+    .mode-select{display:flex;gap:6px}
+    input[type=number],select,input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    .small{font-size:13px;padding:6px 8px}
+    footer{grid-column:1/-1;opacity:0.7;font-size:13px;margin-top:6px;text-align:center}
+    .players-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+    .player-config{padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+    .kbd{font-family:monospace;background:rgba(255,255,255,0.03);padding:3px 6px;border-radius:4px}
+    .danger{border-color:#ff6b6b}
+    .success{border-color:#2ecc71}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Snake — Local Multiplayer + Leaderboards</h1>
+      <div class="muted">Single file HTML • Open in your browser</div>
+    </header>
+
+    <main class="panel" id="game-wrap">
+      <div style="display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between">
+        <div>
+          <strong id="mode-title">Mode: Single Player</strong>
+          <div class="muted" id="status">Press <span class="kbd">Start</span> to play</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="muted">Speed</div>
+          <input id="speed" type="range" min="4" max="18" value="8">
+          <div class="muted" id="speed-val">8</div>
+        </div>
+      </div>
+
+      <canvas id="game" width="720" height="720"></canvas>
+
+      <div class="controls">
+        <button id="startBtn">Start</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetBtn">Reset</button>
+        <button id="addBot">Add AI bot</button>
+        <button id="exportLb">Export leaderboard</button>
+        <button id="importLb">Import leaderboard</button>
+      </div>
+
+      <div style="display:flex;gap:8px;width:100%;align-items:center;justify-content:space-between">
+        <div class="muted">Use Arrow keys / WASD / IJKL / TFGH for up to 4 players</div>
+        <div>
+          <span class="muted">Top score:</span> <strong id="topScore">—</strong>
+        </div>
+      </div>
+    </main>
+
+    <aside class="right-col">
+      <div class="panel">
+        <div class="mini-row"><strong>Game Options</strong><div class="muted">Change before starting</div></div>
+        <label>Mode</label>
+        <div class="mode-select">
+          <select id="modeSelect">
+            <option value="single">Single Player</option>
+            <option value="duo">2 Players (local)</option>
+            <option value="four">Up to 4 Players (local)</option>
+            <option value="ffa">Free-for-all (last snake wins)</option>
+          </select>
+        </div>
+        <label>Grid Size</label>
+        <select id="gridSize">
+          <option value="20">20</option>
+          <option value="24" selected>24</option>
+          <option value="28">28</option>
+          <option value="32">32</option>
+        </select>
+        <label>Initial Players</label>
+        <div class="players-grid" id="playersConfig"></div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center"><strong>Leaderboards</strong><button id="clearLb" class="small">Clear</button></div>
+        <div class="leaderboard" id="leaderboard"></div>
+      </div>
+
+      <div class="panel">
+        <label>Export / Import</label>
+        <textarea id="lbJson" style="width:100%;height:110px;padding:8px;border-radius:8px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.06)"></textarea>
+      </div>
+    </aside>
+
+    <footer class="muted">Made for learning — tweak controls, add networking, or host your own server to enable real online multiplayer.</footer>
+  </div>
+
+  <script>
+    /* ========== Utilities ========== */
+    const $ = (s)=>document.querySelector(s);
+    const qs = (s)=>Array.from(document.querySelectorAll(s));
+
+    const COLORS = ['#3ee7a6','#ffb86b','#7aa2ff','#ff7bb3','#f6f48b'];
+
+    /* ========== Game State ========== */
+    let config = {
+      grid: 24,
+      speed: 8,
+      mode: 'single',
+      maxPlayers: 1
+    };
+
+    const cvs = $('#game');
+    const ctx = cvs.getContext('2d');
+
+    let game;
+
+    /* ========== Player definitions & controls ========== */
+    const PLAYER_DEFS = [
+      { id:'P1', color:COLORS[0], keys:{up:38,left:37,down:40,right:39} }, // arrows
+      { id:'P2', color:COLORS[1], keys:{up:87,left:65,down:83,right:68} }, // WASD
+      { id:'P3', color:COLORS[2], keys:{up:73,left:74,down:75,right:76} }, // IJKL
+      { id:'P4', color:COLORS[3], keys:{up:84,left:70,down:71,right:72} }  // TFGH
+    ];
+
+    function makeDefaultPlayers(n){
+      const players = [];
+      for(let i=0;i<n;i++){
+        players.push({
+          id:PLAYER_DEFS[i].id,
+          color:PLAYER_DEFS[i].color,
+          keys:PLAYER_DEFS[i].keys,
+          body:[],
+          dir:{x:1,y:0},
+          alive:true,
+          score:0,
+          isBot:false
+        });
+      }
+      return players;
+    }
+
+    /* ========== Leaderboard (localStorage) ========== */
+    const LB_KEY = 'snake_leaderboard_v1';
+    function loadLB(){
+      try{const raw=localStorage.getItem(LB_KEY);return raw?JSON.parse(raw):{single:[],duo:[],four:[],ffa:[]}}catch(e){return {single:[],duo:[],four:[],ffa:[]}}}
+    function saveLB(lb){localStorage.setItem(LB_KEY,JSON.stringify(lb));}
+    let leaderboardData = loadLB();
+
+    function addToLB(mode,entry){
+      const arr = leaderboardData[mode] || [];
+      arr.push(entry);
+      arr.sort((a,b)=>b.score-a.score);
+      leaderboardData[mode] = arr.slice(0,12);
+      saveLB(leaderboardData);
+      renderLB();
+    }
+
+    function renderLB(){
+      const el = $('#leaderboard');el.innerHTML='';
+      const arr = leaderboardData[config.mode] || [];
+      if(arr.length===0){el.innerHTML='<div class="muted">No scores yet</div>';return}
+      arr.forEach((r,i)=>{
+        const div = document.createElement('div');div.className='lb-item';
+        div.innerHTML = `<div><strong>#${i+1} ${escapeHtml(r.name||'Player')}</strong><div class="muted" style="font-size:12px">${new Date(r.when).toLocaleString()}</div></div><div style="text-align:right"><div><strong>${r.score}</strong></div><div class="muted" style="font-size:12px">${r.mode}</div></div>`;
+        el.appendChild(div);
+      })
+    }
+
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" })[c])}
+
+    /* ========== Game core ========== */
+    function createGame(){
+      const grid = config.grid;
+      const cell = Math.floor(cvs.width / grid);
+
+      const players = makeDefaultPlayers(config.maxPlayers);
+
+      // place players
+      players.forEach((p,i)=>{
+        const startx = Math.floor(grid/2) + (i%2?Math.floor(grid/4):-Math.floor(grid/4));
+        const starty = Math.floor(grid/2) + (i>1?Math.floor(grid/4):-Math.floor(grid/4));
+        p.body = [{x:startx,y:starty}];
+        p.dir = {x: i%2?1:-1, y:0};
+        p.alive = true;
+        p.score = 0;
+      });
+
+      const apples = [];
+      function spawnApple(){
+        let tries=0;while(tries<200){
+          const a={x:randInt(0,grid-1),y:randInt(0,grid-1)};
+          if(!players.some(pl=>pl.body.some(b=>b.x===a.x&&b.y===a.y)) && !apples.some(t=>t.x===a.x&&t.y===a.y)){
+            apples.push(a);return}
+          tries++
+        }
+      }
+      for(let i=0;i<3;i++)spawnApple();
+
+      return {
+        grid,cell,players,apples,tick:0,running:false,lastFrame:0,frameMod:Math.max(1,Math.floor(20/config.speed))
+      }
+    }
+
+    function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+    function draw(){
+      const g = game.grid;const c = game.cell;
+      // clear
+      ctx.clearRect(0,0,cvs.width,cvs.height);
+
+      // background grid subtly
+      ctx.fillStyle='rgba(255,255,255,0.02)';
+      for(let x=0;x<g;x++)for(let y=0;y<g;y++){
+        if((x+y)%2===0)ctx.fillRect(x*c,y*c,c-1,c-1);
+      }
+
+      // apples
+      game.apples.forEach(a=>{
+        drawRect(a.x,a.y,game.cell-2,'#ff4d4d');
+        // little shine
+        drawRect(a.x + 0.2, a.y + 0.2, game.cell*0.35, 'rgba(255,255,255,0.6)')
+      })
+
+      // snakes
+      game.players.forEach((p,pi)=>{
+        if(!p.alive)return;
+        for(let i=0;i<p.body.length;i++){
+          const seg = p.body[i];
+          const t = i===0?0.95: (1 - (i / Math.max(6,p.body.length)) * 0.6);
+          drawRect(seg.x,seg.y,game.cell-2,hexToRgba(p.color,t));
+        }
+        // name + score
+        const head = p.body[0];
+        ctx.fillStyle='#e6eef6';ctx.font='12px sans-serif';ctx.fillText(`${p.id} (${p.score})`, head.x*game.cell + 6, head.y*game.cell + 14);
+      })
+
+    }
+
+    function drawRect(gx,gy,size,color){
+      ctx.fillStyle = color;ctx.fillRect(gx*game.cell +1, gy*game.cell +1, size, size);
+    }
+
+    function hexToRgba(hex,alpha){
+      const m = hex.replace('#','');const r=parseInt(m.substring(0,2),16),g=parseInt(m.substring(2,4),16),b=parseInt(m.substring(4,6),16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    /* ========== Input handling ========== */
+    const keyState = {};
+    window.addEventListener('keydown',e=>{keyState[e.keyCode]=true;handleKeyForPlayers(e.keyCode)});
+    window.addEventListener('keyup',e=>{keyState[e.keyCode]=false});
+
+    function handleKeyForPlayers(code){
+      game.players.forEach(p=>{
+        if(!p.alive || p.isBot) return;
+        const k = p.keys;
+        if(code===k.up && p.dir.y!==1){p.dir={x:0,y:-1}}
+        if(code===k.down && p.dir.y!==-1){p.dir={x:0,y:1}}
+        if(code===k.left && p.dir.x!==1){p.dir={x:-1,y:0}}
+        if(code===k.right && p.dir.x!==-1){p.dir={x:1,y:0}}
+      })
+    }
+
+    /* ========== Game tick ========== */
+    function step(){
+      if(!game.running) return;
+      game.tick++;
+      const mod = Math.max(1, Math.floor(20 / config.speed));
+      if(game.tick % mod !== 0) return; // regulate speed
+
+      // move bots first (simple AI)
+      game.players.forEach(p=>{
+        if(p.isBot && p.alive) botDecide(p);
+      });
+
+      const grid = game.grid;
+      // compute next heads
+      const nextHeads = game.players.map(p=>({x:p.body[0].x + p.dir.x, y:p.body[0].y + p.dir.y}));
+
+      // wrap-around
+      nextHeads.forEach(h=>{ if(h.x<0)h.x=grid-1; if(h.y<0)h.y=grid-1; if(h.x>=grid)h.x=0; if(h.y>=grid)h.y=0 });
+
+      // check collisions and apple eats
+      // build occupancy map
+      const occupied = {};
+      game.players.forEach((p,pi)=>p.body.forEach((s,si)=>{occupied[`${s.x},${s.y}`]=occupied[`${s.x},${s.y}`]||[];occupied[`${s.x},${s.y}`].push({player:pi,seg:si})}));
+
+      // move each player
+      game.players.forEach((p,pi)=>{
+        if(!p.alive) return;
+        const nh = nextHeads[pi];
+        // check collision with any occupied except tail (because tail moves)
+        const tail = p.body[p.body.length-1];
+        const key = `${nh.x},${nh.y}`;
+        const hit = (occupied[key] || []).some(o=> !(o.player===pi && o.seg===p.body.length-1));
+        if(hit){ p.alive=false; return; }
+        // insert head
+        p.body.unshift({x:nh.x,y:nh.y});
+        // check apple
+        const ateIndex = game.apples.findIndex(a=>a.x===nh.x&&a.y===nh.y);
+        if(ateIndex>=0){
+          p.score += 10; // basic point
+          // extra points for multi apple combos
+          game.apples.splice(ateIndex,1);
+          spawnApplesIfNeeded();
+        } else {
+          // normal move removed tail
+          p.body.pop();
+        }
+      });
+
+      // award survival points in ffa
+      if(config.mode==='ffa'){
+        game.players.forEach(p=>{ if(p.alive) p.score += 1 });
+      }
+
+      // check end conditions
+      const aliveCount = game.players.filter(p=>p.alive).length;
+      if(config.mode==='single' && (aliveCount===0 || (game.players[0].body.length>=(game.grid*game.grid)))){
+        endRound();
+      } else if(config.mode==='duo' && aliveCount<=1){ endRound(); }
+      else if(config.mode==='four' && aliveCount<=1){ endRound(); }
+      else if(config.mode==='ffa' && aliveCount<=1){ endRound(); }
+
+      draw();
+    }
+
+    function spawnApplesIfNeeded(){
+      while(game.apples.length<3) spawnOne();
+    }
+    function spawnOne(){
+      let tries=0;while(tries<500){
+        const a={x:randInt(0,game.grid-1),y:randInt(0,game.grid-1)};
+        if(!game.players.some(pl=>pl.body.some(b=>b.x===a.x&&b.y===a.y)) && !game.apples.some(t=>t.x===a.x&&t.y===a.y)){
+          game.apples.push(a);return}
+        tries++
+      }
+    }
+
+    function endRound(){
+      game.running=false;
+      // collect top scorer
+      const best = game.players.reduce((acc,p)=>p.score>acc.score?{id:p.id,score:p.score}:{...acc},{id:'',score:-1});
+      $('#status').textContent = `Round over — winner: ${best.id} (${best.score})`;
+      $('#topScore').textContent = best.score;
+      // prompt name and add to LB
+      const name = prompt('Round finished. Enter your name for the leaderboard (or leave blank):') || 'Player';
+      const entry = {name,score:best.score,when:Date.now(),mode:config.mode};
+      addToLB(config.mode,entry);
+    }
+
+    /* ========== Simple bot AI ========== */
+    function botDecide(p){
+      // go toward nearest apple avoiding obvious collisions
+      if(game.apples.length===0) return;
+      const head = p.body[0];
+      // find nearest apple
+      let best = null;let bestD=1e9;game.apples.forEach(a=>{const d=Math.abs(a.x-head.x)+Math.abs(a.y-head.y);if(d<bestD){bestD=d;best=a}});
+      if(!best) return;
+      // choose axis
+      const dx = (best.x - head.x + game.grid) % game.grid;
+      const dy = (best.y - head.y + game.grid) % game.grid;
+      const altDx = dx>game.grid/2 ? dx-game.grid : dx;
+      const altDy = dy>game.grid/2 ? dy-game.grid : dy;
+      // prefer horizontal if farther
+      if(Math.abs(altDx) > Math.abs(altDy)){
+        if(altDx>0 && p.dir.x!==-1) p.dir={x:1,y:0}; else if(altDx<0 && p.dir.x!==1) p.dir={x:-1,y:0};
+      } else {
+        if(altDy>0 && p.dir.y!==-1) p.dir={x:0,y:1}; else if(altDy<0 && p.dir.y!==1) p.dir={x:0,y:-1};
+      }
+    }
+
+    /* ========== UI wiring ========== */
+    function setMode(mode){ config.mode=mode; if(mode==='single')config.maxPlayers=1; if(mode==='duo')config.maxPlayers=2; if(mode==='four')config.maxPlayers=4; if(mode==='ffa')config.maxPlayers=4; $('#mode-title').textContent = 'Mode: ' + ({single:'Single Player',duo:'2 Players (local)',four:'Up to 4 Players',ffa:'Free-for-all'}[mode]||mode);
+      buildPlayersConfig(); renderLB(); }
+
+    function buildPlayersConfig(){
+      const wrap = $('#playersConfig');wrap.innerHTML='';
+      for(let i=0;i<config.maxPlayers;i++){
+        const def = PLAYER_DEFS[i];
+        const div = document.createElement('div');div.className='player-config';
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong style="color:${def.color}">${def.id}</strong><label><input type="checkbox" data-pidx="${i}" ${i===0?'checked':''}/> Enabled</label></div><div class="muted" style="font-size:13px">Keys: <span class="kbd">${keyName(def.keys.up)}</span> <span class="kbd">${keyName(def.keys.left)}</span> <span class="kbd">${keyName(def.keys.down)}</span> <span class="kbd">${keyName(def.keys.right)}</span></div><div style="margin-top:8px">Bot? <input type="checkbox" data-bot="${i}" /></div>`;
+        wrap.appendChild(div);
+      }
+    }
+
+    function keyName(code){
+      const map = {37:'←',38:'↑',39:'→',40:'↓',87:'W',65:'A',83:'S',68:'D',73:'I',74:'J',75:'K',76:'L',84:'T',70:'F',71:'G',72:'H'};
+      return map[code]||String.fromCharCode(code);
+    }
+
+    // buttons
+    $('#startBtn').addEventListener('click',()=>{
+      if(game && game.running) return; // already running
+      // rebuild game based on UI
+      config.grid = parseInt($('#gridSize').value,10);
+      config.speed = parseInt($('#speed').value,10);
+      setMode($('#modeSelect').value);
+      // create game
+      game = createGame();
+      // apply bot settings
+      qs('[data-bot]').forEach(cb=>{const idx=parseInt(cb.getAttribute('data-bot')); if(cb.checked){game.players[idx].isBot=true} });
+      // disable players unchecked
+      const enabled = qs('[data-pidx]');
+      enabled.forEach(ch=>{const idx=parseInt(ch.getAttribute('data-pidx')); if(!ch.querySelector('input')||ch.querySelector('input').checked===undefined) return;});
+      // set speed
+      game.running = true;game.tick=0;$('#status').textContent='Playing...';
+      renderLB();
+      loop();
+    });
+
+    $('#pauseBtn').addEventListener('click',()=>{if(!game)return;game.running=!game.running;$('#status').textContent = game.running ? 'Playing...' : 'Paused';});
+    $('#resetBtn').addEventListener('click',()=>{if(confirm('Restart the game?')){game = createGame(); draw();$('#status').textContent='Ready'}});
+
+    $('#addBot').addEventListener('click',()=>{if(!game)return;const idx = game.players.findIndex(p=>!p.isBot); if(idx>=0){game.players[idx].isBot=true;alert('Added bot to '+game.players[idx].id)} else alert('All players already bots or none available')});
+
+    $('#speed').addEventListener('input',e=>{$('#speed-val').textContent=e.target.value;config.speed=parseInt(e.target.value,10)});
+    $('#modeSelect').addEventListener('change',e=>{setMode(e.target.value)});
+    $('#gridSize').addEventListener('change',e=>{config.grid=parseInt(e.target.value,10)});
+
+    $('#exportLb').addEventListener('click',()=>{$('#lbJson').value = JSON.stringify(leaderboardData, null, 2); alert('Leaderboard JSON placed into the textarea — copy to share')});
+    $('#importLb').addEventListener('click',()=>{try{const parsed=JSON.parse($('#lbJson').value);leaderboardData=parsed;saveLB(leaderboardData);renderLB();alert('Imported')}catch(e){alert('Invalid JSON') }});
+    $('#clearLb').addEventListener('click',()=>{if(confirm('Clear local leaderboard?')){leaderboardData={single:[],duo:[],four:[],ffa:[]};saveLB(leaderboardData);renderLB();$('#lbJson').value='';}})
+
+    // build initial UI
+    setMode('single');$('#speed-val').textContent = $('#speed').value;
+
+    // main loop
+    function loop(ts){
+      step();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // initial draw
+    game = createGame(); draw(); renderLB();
+
+    // helpers for tossing in initial players
+    function setupExamplePlayers(){
+      // make some sample players in LB for demo if empty
+      if(Object.values(leaderboardData).every(a=>a.length===0)){
+        addToLB('single',{name:'Sam',score:420,when:Date.now(),mode:'single'});
+        addToLB('duo',{name:'Alex',score:250,when:Date.now(),mode:'duo'});
+      }
+    }
+    setupExamplePlayers();
+
+    // mobile / touch: simple overlay controls (basic)
+    // omitted for brevity; feel free to add on request
+
+    // expose a tiny API for future network code
+    window.__snakeGameAPI = {
+      getState:()=>({players:game.players.map(p=>({id:p.id,score:p.score,alive:p.alive,length:p.body.length}))}),
+      exportLeaderboard:()=>JSON.stringify(leaderboardData),
+      importLeaderboard:(json)=>{leaderboardData=JSON.parse(json);saveLB(leaderboardData);renderLB();}
+    }
+
+  </script>
+</body>
+</html>
