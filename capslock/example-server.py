@@ -196,7 +196,7 @@ html = """
 
             @media (max-width: 950px) {
                 font-size: 1rem;
-                gap 0.5rem;
+                gap: 0.5rem;
             }
         }
 

@@ -8,6 +8,9 @@ on:
         required: false
         default: '60'
 
+permissions:
+  contents: read
+
 jobs:
   run-server:
     runs-on: ubuntu-latest

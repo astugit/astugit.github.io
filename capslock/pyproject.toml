@@ -5,6 +5,6 @@ description = "A synchronized global capslock key"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pyobjc-framework-quartz>=11.0 ; sys_platform == 'darwin'",
-    "websockets>=14.2",
+    "pyobjc-framework-quartz==11.0 ; sys_platform == 'darwin'",
+    "websockets==14.2",
 ]
