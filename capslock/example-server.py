@@ -251,7 +251,7 @@ html = """
                     based on <a href="https://github.com/nolenroyalty/global-capslock">global-capslock</a> by <a href="https://eieio.games">eieio</a>
                 </p>
             </div>
-            <textarea id="caps-input" name="caps-input" rows="5" cols="40">if you're not ready to run the client, you can type some text here if you'd like...</textarea>
+            <textarea id="caps-input" placeholder="if you're not ready to run the client, you can type some text here if you'd like..." name="caps-input" rows="5" cols="40"></textarea>
         </div>
         <script>
             const status = document.getElementById('status');
