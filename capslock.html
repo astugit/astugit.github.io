@@ -264,7 +264,7 @@
             function connect() {
                 // Try to connect to the WebSocket server
                 // Note: This requires a WebSocket server to be running
-                const ws = new WebSocket(`wss://${window.location.host}/capslock/status`);
+                const ws = new WebSocket(`wss://unconcertable-haven-palynological.ngrok-free.dev/capslock/status`);
 
                 ws.onmessage = function(event) {
                     serverStatus.style.display = 'none';
