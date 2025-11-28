@@ -426,6 +426,7 @@ async def broadcast_state(message):
                     pass
 
 @app.websocket("/ws")
+@app.websocket("/capslock/ws")
 async def websocket_endpoint(websocket: WebSocket):
     global capslock_enabled
     await websocket.accept()
@@ -462,6 +463,7 @@ def connected_client_count():
     return f"c {len(connected_clients)}"
 
 @app.websocket("/status")
+@app.websocket("/capslock/status")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     listening_clients.add(websocket)
@@ -493,4 +495,4 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
