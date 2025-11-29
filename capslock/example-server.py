@@ -226,7 +226,7 @@ html = """
                     <a href="https://github.com/astugit">github</a>
                     <a href="https://astutillo.me">home</a>
                 </div>
-                <p>hosted by <a href="https://astutillo.me">astugit</a></p>
+                <p>hosted by <a href="https://github.com/astugit">astugit</a></p>
             </div>
             <!--<h1 class="site-header-title">Global Caps Lock Status</h1>-->
             <button id="status" class="disabled" onclick='alert("Not so fast!!\n\nIf you want to toggle the caps lock key, download the client.\n\nThen other people can toggle caps lock for you too :)")'>
